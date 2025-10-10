@@ -4,7 +4,7 @@ import uvicorn
 from aidial_sdk import DIALApp
 from aidial_sdk.chat_completion import ChatCompletion, Request, Response
 
-from task.llm_agent import GeneralPurposeAgent
+from task.agent import GeneralPurposeAgent
 from task.prompts import SYSTEM_PROMPT
 from task.tools.base import BaseTool
 from task.tools.deployment.image_generation_tool import ImageGenerationTool
