@@ -7,7 +7,7 @@ from aidial_sdk.chat_completion import Message, Attachment
 from pydantic import StrictStr, AnyUrl
 
 from task.tools.base import BaseTool
-from task.tools.mcp.interpreter._response import _ExecutionResult
+from task.tools.py_interpreter._response import _ExecutionResult
 from task.tools.mcp.mcp_client import MCPClient
 from task.tools.mcp.mcp_tool_model import MCPToolModel
 from task.tools.models import ToolCallParams

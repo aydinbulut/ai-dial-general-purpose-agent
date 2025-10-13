@@ -9,7 +9,7 @@ from task.prompts import SYSTEM_PROMPT
 from task.tools.base import BaseTool
 from task.tools.deployment.image_generation_tool import ImageGenerationTool
 from task.tools.files.file_content_extraction_tool import FileContentExtractionTool
-from task.tools.mcp.interpreter.python_code_interpreter_tool import PythonCodeInterpreterTool
+from task.tools.py_interpreter.python_code_interpreter_tool import PythonCodeInterpreterTool
 from task.tools.mcp.mcp_client import MCPClient
 from task.tools.mcp.mcp_tool import MCPTool
 from task.tools.rag.document_cache import DocumentCache
