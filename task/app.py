@@ -42,6 +42,9 @@ class GeneralPurposeAgentApplication(ChatCompletion):
             raise e
 
     async def _create_tools(self) -> list[BaseTool]:
+        py_interpreter_mcp_url = os.getenv('PYINTERPRETER_MCP_URL', "http://localhost:8050/mcp")
+        print(f"PYINTERPRETER_MCP_URL {py_interpreter_mcp_url}")
+
         tools: list[BaseTool] = [
             ImageGenerationTool(endpoint=DIAL_ENDPOINT),
             FileContentExtractionTool(endpoint=DIAL_ENDPOINT),
@@ -51,13 +54,15 @@ class GeneralPurposeAgentApplication(ChatCompletion):
                 document_cache=DocumentCache.create()
             ),
             await PythonCodeInterpreterTool.create(
-                mcp_url="http://localhost:8050/mcp",
+                mcp_url=py_interpreter_mcp_url,
                 tool_name="execute_code",
                 dial_endpoint=DIAL_ENDPOINT
             )
         ]
 
-        tools.extend(await self._get_mcp_tools("http://localhost:8051/mcp"))
+        ddg_mcp_url = os.getenv('DDG_MCP_URL', "http://localhost:8051/mcp")
+        print(f"DDG_MCP_URL {ddg_mcp_url}")
+        tools.extend(await self._get_mcp_tools(ddg_mcp_url))
 
         return tools
 
@@ -83,4 +88,4 @@ agent_app = GeneralPurposeAgentApplication()
 app.add_chat_completion(deployment_name="general-purpose-agent", impl=agent_app)
 
 if __name__ == "__main__":
-    uvicorn.run(app, port=5030, host="0.0.0.0")
+    uvicorn.run(app, port=5000, host="0.0.0.0")
