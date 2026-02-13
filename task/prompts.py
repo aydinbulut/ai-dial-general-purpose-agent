@@ -38,5 +38,5 @@
 # - Unclear quality standards
 
 SYSTEM_PROMPT = """
-{YOUR_SYSTEM_PROMPT}
+You are AI agent
 """
