@@ -52,7 +52,7 @@ class GeneralPurposeAgent:
         #    - make it stream
         chunks = await dial_client.chat.completions.create(
             messages=self._prepare_messages(request.messages),
-            # tools=[tool.get_tool_schema() for tool in self.tools],
+            tools=[tool.schema for tool in self.tools],
             deployment_name=deployment_name,
             stream=True,
         )
@@ -117,13 +117,12 @@ class GeneralPurposeAgent:
                 conversation_id = request.headers.get("x-conversation-id", "")
                 tasks.append(self._process_tool_call(tool_call, choice, request.api_key, conversation_id))
             tool_messages = await asyncio.gather(*tasks)
-            self.state[TOOL_CALL_HISTORY_KEY].append(assistant_message.dict(exclude_none=True))
+            self.state[TOOL_CALL_HISTORY_KEY].append(assistant_message.model_dump(exclude_none=True))
             self.state[TOOL_CALL_HISTORY_KEY].extend(tool_messages)
             return await self.handle_request(deployment_name, choice, request, response)
         # 7. We don't have any tool calls and reasy to finish user request. Set choice with `state` and return `assistant_message`
-        else:
-            choice.state = self.state
-            return assistant_message
+        choice.set_state(self.state)
+        return assistant_message
 
     def _prepare_messages(self, messages: list[Message]) -> list[dict[str, Any]]:
         #TODO:
@@ -149,24 +148,27 @@ class GeneralPurposeAgent:
         tool_name = tool_call.function.name
         # 2. Open Stage with StageProcessor (it will be shown in DIAL Chat and Stage serves in our case for
         #    tool call results representation)
-        with StageProcessor.open_stage(choice, tool_name) as stage:
+        stage = StageProcessor.open_stage(choice, tool_name)
         # 3. Get tool from `_tools_dict` by tool name
-            tool = self._tools_dict.get(tool_name)
+        tool = self._tools_dict.get(tool_name)
         # 4. If tool show_in_stage is true then:
         #   - append content to stage "## Request arguments: \n"
         #   - append content to stage f"```json\n\r{json.dumps(json.loads(tool_call.function.arguments), indent=2)}\n\r```\n\r"
         #     it will print arguments as markdown json
         #   - append content to stage "## Response: \n"
-            if tool and tool.show_in_stage:
-                stage.append_content("## Request arguments: \n")
-                stage.append_content(f"```json\n\r{json.dumps(json.loads(tool_call.function.arguments), indent=2)}\n\r```\n\r")
-                stage.append_content("## Response: \n")
+        if tool and tool.show_in_stage:
+            stage.append_content("## Request arguments: \n")
+            stage.append_content(f"```json\n\r{json.dumps(json.loads(tool_call.function.arguments), indent=2)}\n\r```\n\r")
+            stage.append_content("## Response: \n")
         # 5. Execute tool
-                tool_response = tool.execute(tool_call.function.arguments)
+        tool_response = await tool.execute(ToolCallParams(
+            tool_call=tool_call,
+            stage=stage,
+            choice=choice,
+            api_key=api_key,
+            conversation_id=conversation_id,
+        ))
         # 6. Close stage with StageProcessor
-            StageProcessor.close_stage_safely(stage)
+        StageProcessor.close_stage_safely(stage)
         # 7. Return tool message as dict and don't forget to exclude none
-        return Message(
-            role=Role.ASSISTANT,
-            content=tool_response,
-        ).model_dump(exclude_none=True)
+        return tool_response.model_dump(exclude_none=True)

@@ -48,7 +48,7 @@ class GeneralPurposeAgentApplication(ChatCompletion):
         # 2. Add ImageGenerationTool with DIAL_ENDPOINT
         # tools.append(ImageGenerationTool(endpoint=DIAL_ENDPOINT))
         # 3. Add FileContentExtractionTool with DIAL_ENDPOINT
-        # tools.append(FileContentExtractionTool(endpoint=DIAL_ENDPOINT))
+        tools.append(FileContentExtractionTool(endpoint=DIAL_ENDPOINT))
         # 4. Add RagTool with DIAL_ENDPOINT, DEPLOYMENT_NAME, and create DocumentCache (it has static method `create`)
         # document_cache = DocumentCache.create()
         # tools.append(RagTool(
@@ -70,8 +70,8 @@ class GeneralPurposeAgentApplication(ChatCompletion):
     async def chat_completion(self, request: Request, response: Response) -> None:
         #TODO:
         # 1. If `self.tools` are absent then call `_create_tools` method and assign to the `self.tools`
-        # if not self.tools:
-            # self.tools = await self._create_tools()
+        if not self.tools:
+            self.tools = await self._create_tools()
         # 2. Create `choice` (`with response.create_single_choice() as choice:`) and:
         #   - Create GeneralPurposeAgent with:
         #       - endpoint=DIAL_ENDPOINT
