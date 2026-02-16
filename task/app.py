@@ -30,7 +30,7 @@ class GeneralPurposeAgentApplication(ChatCompletion):
         # 1. Create list of BaseTool
         mcp_tools: list[BaseTool] = []
         # 2. Create MCPClient
-        mcp_client = MCPClient(mcp_server_url=url)
+        mcp_client = await MCPClient.create(mcp_server_url=url)
         # 3. Get tools, iterate through them and add them to created list as MCPTool where the client will be created
         #    MCPClient and mcp_tool_model will be the tool itself (see what `mcp_client.get_tools` returns).
         for mcp_tool_model in await mcp_client.get_tools():
@@ -45,10 +45,13 @@ class GeneralPurposeAgentApplication(ChatCompletion):
         # At the beginning this list can be empty. We will add here tools after they will be implemented
         # ---
         tools: list[BaseTool] = []
+        
         # 2. Add ImageGenerationTool with DIAL_ENDPOINT
         tools.append(ImageGenerationTool(endpoint=DIAL_ENDPOINT))
+        
         # 3. Add FileContentExtractionTool with DIAL_ENDPOINT
         tools.append(FileContentExtractionTool(endpoint=DIAL_ENDPOINT))
+
         # 4. Add RagTool with DIAL_ENDPOINT, DEPLOYMENT_NAME, and create DocumentCache (it has static method `create`)
         document_cache = DocumentCache.create()
         tools.append(RagTool(
@@ -63,11 +66,10 @@ class GeneralPurposeAgentApplication(ChatCompletion):
         #     mcp_url="http://localhost:8050/mcp",
         #     tool_name="execute_code",
         # ))
+
         # 6. Extend tools with MCP tools from `http://localhost:8051/mcp` (use method `_get_mcp_tools`)
-        mcp_client = await MCPClient.create(mcp_server_url="http://localhost:8051/mcp")
-        mcp_tools = mcp_client.get_tools()
-        for mcp_tool_model in await mcp_tools:
-            tools.append(MCPTool(client=mcp_client, mcp_tool_model=mcp_tool_model))
+        tools.extend(await self._get_mcp_tools(url="http://localhost:8051/mcp"))
+
         return tools
 
     async def chat_completion(self, request: Request, response: Response) -> None:
