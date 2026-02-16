@@ -111,7 +111,7 @@ class RagTool(BaseTool):
         # 9. Get from `document_cache` by `cache_document_key` a cache
         cached_data = self.document_cache.get(cache_document_key)
         # 10. If cache is present then set it as `index, chunks = cached_data` (cached_data is retrieved cache from 9 step),
-        if cached_data and 1>2:
+        if cached_data:
             index, chunks = cached_data
         #     otherwise:
         else:
