@@ -65,4 +65,14 @@ services:
       DIAL_URL: "http://core:8080"
       LOG_LEVEL: "INFO"
 
-
+  ddg-search:
+    image: khshanovskyi/ddg-mcp-server:latest
+    platform: linux/amd64
+    ports:
+      - "8051:8000"
+    environment:
+      LOG_LEVEL: "INFO"
+      MCP_TRANSPORT: "streamable-http"
+    restart: unless-stopped
+    mem_limit: 512M
+    cpus: 0.5

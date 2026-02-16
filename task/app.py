@@ -64,7 +64,10 @@ class GeneralPurposeAgentApplication(ChatCompletion):
         #     tool_name="execute_code",
         # ))
         # 6. Extend tools with MCP tools from `http://localhost:8051/mcp` (use method `_get_mcp_tools`)
-        # tools.extend(await self._get_mcp_tools(url="http://localhost:8051/mcp"))
+        mcp_client = await MCPClient.create(mcp_server_url="http://localhost:8051/mcp")
+        mcp_tools = mcp_client.get_tools()
+        for mcp_tool_model in await mcp_tools:
+            tools.append(MCPTool(client=mcp_client, mcp_tool_model=mcp_tool_model))
         return tools
 
     async def chat_completion(self, request: Request, response: Response) -> None:
