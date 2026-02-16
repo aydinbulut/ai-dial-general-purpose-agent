@@ -46,7 +46,7 @@ class GeneralPurposeAgentApplication(ChatCompletion):
         # ---
         tools: list[BaseTool] = []
         # 2. Add ImageGenerationTool with DIAL_ENDPOINT
-        # tools.append(ImageGenerationTool(endpoint=DIAL_ENDPOINT))
+        tools.append(ImageGenerationTool(endpoint=DIAL_ENDPOINT))
         # 3. Add FileContentExtractionTool with DIAL_ENDPOINT
         tools.append(FileContentExtractionTool(endpoint=DIAL_ENDPOINT))
         # 4. Add RagTool with DIAL_ENDPOINT, DEPLOYMENT_NAME, and create DocumentCache (it has static method `create`)
