@@ -1,0 +1,6 @@
+FROM khshanovskyi/python-code-interpreter-mcp-server:latest
+
+RUN python - <<'PY'
+from pathlib import Path
+
+PY

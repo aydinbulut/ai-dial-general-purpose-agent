@@ -77,23 +77,24 @@ class GeneralPurposeAgent:
         #                     `function` `arguments` (if not present set them as empty string to not attach haphazardly None)
         #                     as `argument_chunk` and add it to the extracted from map tool_call function arguments
         async for chunk in chunks:
-            if chunk.choices:
-                delta = chunk.choices[0].delta
-                if delta:
-                    if delta.content:
-                        choice.append_content(delta.content)
-                        content += delta.content
-                    if delta.tool_calls:
-                        for tool_call_delta in delta.tool_calls:
-                            if tool_call_delta.id is not None:
-                                tool_call_index_map[tool_call_delta.index] = tool_call_delta
-                            else:
-                                existing_tool_call = tool_call_index_map[tool_call_delta.index]
-                                if tool_call_delta.function:
-                                    argument_chunk = tool_call_delta.function.arguments or ""
-                                    existing_tool_call.function.arguments = (
-                                        (existing_tool_call.function.arguments or "") + argument_chunk
-                                    )
+            if not chunk.choices:
+                continue
+            
+            delta = chunk.choices[0].delta
+                
+            if delta and delta.content:
+                choice.append_content(delta.content)
+                content += delta.content
+                
+            if delta.tool_calls:
+                for tool_call_delta in delta.tool_calls:
+                    if tool_call_delta.id is not None:
+                        tool_call_index_map[tool_call_delta.index] = tool_call_delta
+                    else:
+                        existing_tool_call = tool_call_index_map[tool_call_delta.index]
+                        if tool_call_delta.function:
+                            argument_chunk = tool_call_delta.function.arguments or ''
+                            existing_tool_call.function.arguments += argument_chunk
         # 5. Create `assistant_message`, with role, content and tool_calls. `tool_calls` should be a list with ToolCall
         #    objects generated from `tool_call_index_map` dict values. to create ToolCall use `validate` method (it
         #    will show you the notification that it is deprecated but we need to use it because DIAL SDK is built on top of pydentic.v1)
@@ -122,7 +123,7 @@ class GeneralPurposeAgent:
             return await self.handle_request(deployment_name, choice, request, response)
         # 7. We don't have any tool calls and reasy to finish user request. Set choice with `state` and return `assistant_message`
         choice.set_state(self.state)
-        return assistant_message
+        # return assistant_message
 
     def _prepare_messages(self, messages: list[Message]) -> list[dict[str, Any]]:
         #TODO:

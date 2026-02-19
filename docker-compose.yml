@@ -76,3 +76,16 @@ services:
     restart: unless-stopped
     mem_limit: 512M
     cpus: 0.5
+
+  python-interpreter:
+    build:
+      context: .
+      dockerfile: Dockerfile.python-interpreter
+    image: python-interpreter-mcp-custom:latest
+    ports:
+      - "8050:8000"
+    environment:
+      LOG_LEVEL: "INFO"
+    restart: unless-stopped
+    mem_limit: 4G
+    cpus: 4.0

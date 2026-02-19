@@ -38,49 +38,81 @@ class MCPClient:
         # 5. Enter `self._session_context` and set as self.session
         # 6. Initialize session and print its result to console
         if self.session is not None:
-            return
+            return  # Already connected
+
+        # Create streams context
         self._streams_context = streamablehttp_client(self.server_url)
         read_stream, write_stream, _ = await self._streams_context.__aenter__()
-        self._session_context = ClientSession(read_stream, write_stream)
-        self.session = await self._session_context.__aenter__()
-        result = await self.session.initialize()
-        print(result)
 
+        # Create session context
+        self._session_context = ClientSession(read_stream, write_stream)
+        self.session: ClientSession = await self._session_context.__aenter__()
+
+        # Initialize session
+        await self.session.initialize()
+
+        # Verify connection with ping (will raise exception if fails)
+        try:
+            await self.session.send_ping()
+        except Exception as e:
+            # Clean up on connection failure
+            await self.close()
+            raise ValueError(f"MCP server connection failed: {e}")
 
     async def get_tools(self) -> list[MCPToolModel]:
         """Get available tools from MCP server"""
         #TODO: Get and return MCP tools as list of MCPToolModel
-        result: ListToolsResult = await self.session.list_tools()
-        tools: list[Tool] = result.tools
+        if not self.session:
+            raise RuntimeError("MCP client not connected.")
+
+        tools = await self.session.list_tools()
         return [
             MCPToolModel(
                 name=tool.name,
-                description=tool.description or "",
+                description=tool.description,
                 parameters=tool.inputSchema,
             )
-            for tool in tools
+            for tool in tools.tools
         ]
 
     async def call_tool(self, tool_name: str, tool_args: dict[str, Any]) -> Any:
         """Call a tool on the MCP server"""
         #TODO: Make tool call and return its result. Do it in proper way (it returns array of content and you need to handle it properly)
-        result: CallToolResult = await self.session.call_tool(tool_name, tool_args)
-        return [
-            content.text if isinstance(content, TextContent) else content
-            for content in result.content
-        ]
+        if not self.session:
+            raise RuntimeError("MCP client not connected.")
+        
+        tool_result: CallToolResult = await self.session.call_tool(tool_name, tool_args)
+        
+        if not tool_result.content:
+            return None
+        
+        content = tool_result.content[0]
+
+        if isinstance(content, TextContent):
+            return content.text
+
+        return content
 
     async def get_resource(self, uri: AnyUrl) -> str | bytes:
         """Get specific resource content"""
         #TODO: Get and return resource. Resources can be returned as TextResourceContents and BlobResourceContents, you
         #      need to return resource value (text or blob)
-        result: ReadResourceResult = await self.session.read_resource(uri)
-        for content in result.contents:
-            if isinstance(content, TextResourceContents):
-                return content.text
-            elif isinstance(content, BlobResourceContents):
-                return content.blob
-        return ""
+        if not self.session:
+            raise RuntimeError("MCP client not connected.")
+
+        resource_result: ReadResourceResult = await self.session.read_resource(uri)
+
+        if not resource_result.contents:
+            raise ValueError(f"No content in resource: {uri}")
+
+        content = resource_result.contents[0]
+
+        if isinstance(content, TextResourceContents):
+            return content.text
+        elif isinstance(content, BlobResourceContents):
+            return content.blob
+        else:
+            raise ValueError(f"Unexpected content type: {type(content)}")
 
     async def close(self):
         """Close connection to MCP server"""
@@ -88,13 +120,24 @@ class MCPClient:
         # 1. Close `self._session_context`
         # 2. Close `self._streams_context`
         # 3. Set session, _session_context and _streams_context as None
-        if self._session_context is not None:
-            await self._session_context.__aexit__(None, None, None)
-        if self._streams_context is not None:
-            await self._streams_context.__aexit__(None, None, None)
-        self.session = None
-        self._session_context = None
-        self._streams_context = None
+         # Exit contexts in reverse order of entry
+        try:
+            if self._session_context:
+                await self._session_context.__aexit__(None, None, None)
+        except Exception as e:
+            print(f"Warning: Error closing session context: {e}")
+
+        try:
+            if self._streams_context:
+                await self._streams_context.__aexit__(None, None, None)
+        except Exception as e:
+            print(f"Warning: Error closing streams context: {e}")
+
+        finally:
+            # Clean up references
+            self.session = None
+            self._session_context = None
+            self._streams_context = None
 
     async def __aenter__(self):
         """Async context manager entry"""
@@ -105,4 +148,3 @@ class MCPClient:
         """Async context manager exit"""
         await self.close()
         return False
-

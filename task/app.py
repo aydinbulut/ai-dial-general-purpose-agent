@@ -59,16 +59,17 @@ class GeneralPurposeAgentApplication(ChatCompletion):
             deployment_name=DEPLOYMENT_NAME,
             document_cache=document_cache,
         ))
+
         # 5. Add PythonCodeInterpreterTool with DIAL_ENDPOINT, `http://localhost:8050/mcp` mcp_url, tool_name is
         #    `execute_code`, more detailed about tools see in repository https://github.com/khshanovskyi/mcp-python-code-interpreter
-        # tools.append(PythonCodeInterpreterTool(
-        #     dial_endpoint=DIAL_ENDPOINT,
-        #     mcp_url="http://localhost:8050/mcp",
-        #     tool_name="execute_code",
-        # ))
+        tools.append(await PythonCodeInterpreterTool.create(
+            mcp_url="http://localhost:8050/mcp/",
+            tool_name="execute_code",
+            dial_endpoint=DIAL_ENDPOINT,
+        ))
 
         # 6. Extend tools with MCP tools from `http://localhost:8051/mcp` (use method `_get_mcp_tools`)
-        tools.extend(await self._get_mcp_tools(url="http://localhost:8051/mcp"))
+        tools.extend(await self._get_mcp_tools(url="http://localhost:8051/mcp/"))
 
         return tools
 
