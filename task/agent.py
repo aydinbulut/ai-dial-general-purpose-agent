@@ -169,6 +169,9 @@ class GeneralPurposeAgent:
             api_key=api_key,
             conversation_id=conversation_id,
         ))
+        # Append tool response to stage if `show_in_stage` is true. We will show tool response in markdown text block
+        if tool and tool.show_in_stage:
+            stage.append_content(f"```text\n\r{tool_response.content}\n\r```\n\r")
         # 6. Close stage with StageProcessor
         StageProcessor.close_stage_safely(stage)
         # 7. Return tool message as dict and don't forget to exclude none

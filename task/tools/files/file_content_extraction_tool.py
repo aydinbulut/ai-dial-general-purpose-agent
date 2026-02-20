@@ -68,14 +68,17 @@ class FileContentExtractionTool(BaseTool):
         # 4. Get stage from `tool_call_params`
         stage = tool_call_params.stage
         # 5. Append content to stage: "## Request arguments: \n"
-        stage.append_content("## Request arguments: \n")
+        if (not self.show_in_stage):
+            stage.append_content("## Request arguments: \n")
         # 6. Append content to stage: `f"**File URL**: {file_url}\n\r"`
-        stage.append_content(f"**File URL**: {file_url}\n\r")
+        if (not self.show_in_stage):
+            stage.append_content(f"**File URL**: {file_url}\n\r")
         # 7. If `page` more than 1 then append content to stage: `f"**Page**: {page}\n\r"`
-        if page > 1:
+        if page > 1 and (not self.show_in_stage):
             stage.append_content(f"**Page**: {page}\n\r")
         # 8. Append content to stage: "## Response: \n"
-        stage.append_content("## Response: \n")
+        if (not self.show_in_stage):
+            stage.append_content("## Response: \n")
         # 9. Implement `task.utils.dial_file_conent_extractor`, create DialFileContentExtractor and call `extract_text`
         #    method as `content`
         content_extractor = DialFileContentExtractor(self.endpoint, tool_call_params.api_key)
@@ -106,6 +109,7 @@ class FileContentExtractionTool(BaseTool):
                 page_content = content[start_index:end_index]
                 content = f"{page_content}\n\n**Page #{page}. Total pages: {total_pages}**"
         # 12. Append content to stage: `f"```text\n\r{content}\n\r```\n\r"` (Will be shown in stage as markdown text)
-        stage.append_content(f"```text\n\r{content}\n\r```\n\r")
+        if (not self.show_in_stage):
+            stage.append_content(f"```text\n\r{content}\n\r```\n\r")
         # 13. Return `content`
         return content
