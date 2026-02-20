@@ -26,7 +26,13 @@
     "dall-e-3": {
       "displayName": "DALL-E 3",
       "endpoint": "http://adapter-dial:5000/openai/deployments/dall-e-3/chat/completions",
-      "iconUrl": "http://localhost:3001/gpt3.svg",
+      "iconUrl": "https://chat.lab.epam.com/themes/gpt3.svg",
+      "type": "chat"
+    },
+    "claude-sonnet-4": {
+      "displayName": "Claude Sonnet 4",
+      "endpoint": "http://adapter-dial:5000/openai/deployments/claude-sonnet-4/chat/completions",
+      "iconUrl": "https://chat.lab.epam.com/themes/anthropic.svg",
       "type": "chat"
     }
   },
